@@ -253,4 +253,4 @@ claude plugin test plugins/<mod>
 
 ## 版權與識別
 
-罐罐造型參考 LINE 貼圖「罐罐說你好」，TCAN 圖示與配色取自 [tcan2050.org.tw](https://tcan2050.org.tw)，皆為 TCAN 台灣氣候行動網絡的識別。這個 repo 目前為私人；若要對外公開發佈，請先與 TCAN 確認。
+罐罐造型參考 LINE 貼圖「罐罐說你好」，TCAN 圖示與配色取自 [tcan2050.org.tw](https://tcan2050.org.tw)，皆為 TCAN 台灣氣候行動網絡的識別。
