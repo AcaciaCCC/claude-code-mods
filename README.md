@@ -159,6 +159,8 @@ claude plugin uninstall <mod 名稱>@tcan-claude-mods
 
 小工具內容：
 
+<p align="center"><img src="docs/images/screenshots/usage-widget.png" width="300" alt="實機截圖：用量小工具，5 小時與 7 天增溫條、重置時間、每天用量月曆"></p>
+
 - **5 小時、7 天**：大字寫剩幾 %，下面的**增溫條**（20 格，深藍 → 深紅）代表已用的部分，再下面寫重置時間（今天 18:00／明天／11/21（五））。
 - **每天用掉的 7 天額度**：像 GitHub 貢獻圖的月曆，每一欄一週、由上到下是週一到週日，滑鼠移到格子上會顯示日期和 %。
 
@@ -218,6 +220,9 @@ claude plugin uninstall <mod 名稱>@tcan-claude-mods
 
 - 兩顆各自開關；兩個都打開時是同一個小工具「用量與時間」，上面額度、下面使用時間。
 - 用小工具的 × 關掉時，兩顆按鈕都會回到收起狀態。
+
+<p align="center"><img src="docs/images/screenshots/usage-and-time.png" width="300" alt="實機截圖：用量與時間小工具，上面額度、下面使用時間與本週各資料夾"></p>
+<p align="center"><sub>實機截圖：兩顆按鈕都打開時的「用量與時間」</sub></p>
 
 ---
 
