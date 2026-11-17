@@ -1,0 +1,6 @@
+{
+  "name": "usage-meter",
+  "version": "1.0.0",
+  "description": "在輸入框右上方放一顆按鈕，打開後顯示 Claude 方案的 5 小時、7 天額度還剩多少、何時重置，以及每天用掉多少 7 天額度的月曆（TCAN 配色）。可以搭配 usage-time 一起用。",
+  "types": "./types/index.d.ts"
+}

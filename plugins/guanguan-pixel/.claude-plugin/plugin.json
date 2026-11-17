@@ -1,0 +1,7 @@
+{
+  "name": "guanguan-pixel",
+  "version": "1.0.0",
+  "description": "TCAN 吉祥物「罐罐」像素動畫：工作中踏步、每日招呼、做完事眨眼、提到 TCAN 跳出圖示、跑太久地球轉一下",
+  "author": { "name": "TCAN" },
+  "types": "./types/index.d.ts"
+}

@@ -1,0 +1,6 @@
+{
+  "name": "usage-time",
+  "version": "1.0.0",
+  "description": "記錄你使用 Claude Code 的時間：今天（所有對話、重疊只算一次）、本週每天、本週各資料夾的比例。從第一則訊息算到最後一則，隔超過 30 分鐘不算。可以搭配 usage-meter 一起用。",
+  "types": "./types/index.d.ts"
+}

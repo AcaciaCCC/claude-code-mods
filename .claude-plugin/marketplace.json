@@ -1,0 +1,11 @@
+{
+  "name": "tcan-claude-mods",
+  "owner": { "name": "AcaciaCCC" },
+  "description": "Claude Code 小工具合集：TCAN 主題、罐罐像素動畫、用量額度、使用時間",
+  "plugins": [
+    { "name": "tcan-theme", "source": "./plugins/tcan-theme", "description": "TCAN 配色主題（Claude 桌面版與手機版）" },
+    { "name": "guanguan-pixel", "source": "./plugins/guanguan-pixel", "description": "罐罐像素動畫（Claude 桌面版）" },
+    { "name": "usage-meter", "source": "./plugins/usage-meter", "description": "5 小時／7 天額度、重置時間、每天用量月曆" },
+    { "name": "usage-time", "source": "./plugins/usage-time", "description": "今天、本週每天、本週各資料夾的使用時間" }
+  ]
+}
