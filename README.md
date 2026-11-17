@@ -97,7 +97,7 @@ claude plugin uninstall <mod 名稱>@tcan-claude-mods
 
 - 程式碼區塊用 `github-light` 配色（藍、深藍、紅）；App 不提供時改用 TCAN 色延伸的配色。
 - 字體與版面無法用主題更改；終端機與編輯器裡的 Claude Code 不會變色。
-- ⚠️ 2026-11-17 測試時，桌面 App（Claude Code 2.1.325）狀態列顯示 `tcan-theme: no attached desktop or mobile client draws themes yet`，也就是這版 App 還不會畫 mod 主題，主題程式已就緒，等 App 支援後就會套用。因此這裡暫時沒有實機截圖。
+- 狀態列若顯示 `no attached desktop or mobile client draws themes yet`，只表示主題送出時 App 還沒接上，主題仍會套用，可忽略。
 - 顏色都在 [`plugins/tcan-theme/hooks/register.ts`](plugins/tcan-theme/hooks/register.ts)。
 
 詳細說明：[plugins/tcan-theme/README.md](plugins/tcan-theme/README.md)
