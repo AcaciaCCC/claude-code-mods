@@ -3,6 +3,11 @@ import type { EngineInterface, Register, Timer } from 'claude-code'
 
 import type { Scene } from '../types'
 import { EARTH_FAST, IDLE, TCAN_ICON, WALK, WINK } from './sprite'
+import { pickLang, STRINGS } from './strings'
+import type { Strings } from './strings'
+
+// 介面文字：register 依設定的 language 換成對應語言。
+let S: Strings = STRINGS['zh-Hant']
 
 // 輸入框上方的場景：平常什麼都不顯示，只在特定時刻出現幾秒。
 const scene = atom({ plugin: 'guanguan-pixel', key: 'scene' } as const, null as Scene)
@@ -23,28 +28,6 @@ let doneTimer: Timer | undefined
 
 // 正在用的工具：讓「運作中」那一排依工具換台詞。
 const currentTool = atom({ plugin: 'guanguan-pixel', key: 'tool' } as const, null as string | null)
-
-const TOOL_WORDS: Record<string, string> = {
-  Bash: '罐罐跑指令中',
-  Read: '罐罐翻資料中',
-  Grep: '罐罐找線索中',
-  Glob: '罐罐找檔案中',
-  Edit: '罐罐修改中',
-  Write: '罐罐寫東西中',
-  NotebookEdit: '罐罐寫東西中',
-  WebSearch: '罐罐上網查資料',
-  WebFetch: '罐罐上網看網頁',
-  Agent: '罐罐找幫手中',
-  Skill: '罐罐翻說明書',
-}
-
-const WORDS: Record<string, string> = {
-  thinking: '罐罐思考中',
-  requesting: '罐罐出發中',
-  'tool-use': '罐罐動手做',
-  'tool-input': '罐罐動手做',
-  responding: '罐罐回覆中',
-}
 
 // 從工具的輸入挑一句人看得懂的描述（指令說明、檔名、搜尋字…）。
 function describe(input: unknown): string | undefined {
@@ -75,11 +58,12 @@ function play($: EngineInterface, next: Scene, ms: number) {
   })
 }
 
-// 台灣日期（UTC+8），例如 2026-11-17。
+// 這台電腦當地的日期，例如 2026-11-17。
 async function today($: EngineInterface) {
-  const now = await $.clock.now()
+  const d = new Date(await $.clock.now())
+  const pad = (x: number) => String(x).padStart(2, '0')
 
-  return new Date(now + 8 * 3600 * 1000).toISOString().slice(0, 10)
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
 // 每天第一則訊息時打招呼。
@@ -101,7 +85,9 @@ function watchLongRun($: EngineInterface) {
   })
 }
 
-export const register: Register = on => {
+export const register: Register = (on, options) => {
+  S = STRINGS[pickLang(options?.language)]
+
   on('prompt.submit', ($, e, next) => {
     const lower = e.text.toLowerCase()
     doneTimer?.cancel()
@@ -148,13 +134,13 @@ export const register: Register = on => {
     const tool = await read($, currentTool)
     const toolWord =
       e.props.mode === 'tool-use' && tool
-        ? (TOOL_WORDS[tool] ?? (tool.startsWith('mcp__') ? '罐罐連線外部工具中' : undefined))
+        ? (S.tools[tool] ?? (tool.startsWith('mcp__') ? S.mcp : undefined))
         : undefined
-    const label = e.props.message ?? toolWord ?? WORDS[e.props.mode] ?? e.props.word
+    const label = e.props.message ?? toolWord ?? S.modes[e.props.mode] ?? e.props.word
 
     return (
       <Box flexDirection="row" alignItems="center" gap={1}>
-        <Svg source={WALK} alt="像素罐罐在踏步" width={30} height={33} isInteractive />
+        <Svg source={WALK} alt={S.altWalk} width={30} height={33} isInteractive />
         <Text dimColor>{label}…</Text>
       </Box>
     )
@@ -168,11 +154,11 @@ export const register: Register = on => {
 
     const { Box, Svg, Text } = $.ui.resolve(e)
     const what = describe(e.props.input)
-    const word = TOOL_WORDS[e.props.tool] ?? (e.props.tool.startsWith('mcp__') ? '罐罐連線外部工具中' : '罐罐動手做')
+    const word = S.tools[e.props.tool] ?? (e.props.tool.startsWith('mcp__') ? S.mcp : S.working)
 
     return (
       <Box flexDirection="row" alignItems="center" gap={1}>
-        <Svg source={WALK} alt="像素罐罐在工作" width={18} height={20} isInteractive />
+        <Svg source={WALK} alt={S.altWorking} width={18} height={20} isInteractive />
         <Text>{what ?? word}</Text>
         {what ? <Text dimColor>{word}…</Text> : null}
       </Box>
@@ -189,7 +175,7 @@ export const register: Register = on => {
 
     return (
       <Box flexDirection="row" alignItems="center" gap={1}>
-        <Svg source={WALK} alt="像素罐罐在工作" width={18} height={20} isInteractive />
+        <Svg source={WALK} alt={S.altWorking} width={18} height={20} isInteractive />
         <Box flexGrow={1}>{await next(e)}</Box>
       </Box>
     )
@@ -210,20 +196,20 @@ export const register: Register = on => {
     const { Box, Svg, Text } = $.ui.resolve(e)
     const art =
       now === 'tcan' ? (
-        <Svg source={TCAN_ICON} alt="TCAN 像素圖示" width={37} height={44} isInteractive />
+        <Svg source={TCAN_ICON} alt={S.altTcan} width={37} height={44} isInteractive />
       ) : now === 'earth' ? (
-        <Svg source={EARTH_FAST} alt="旋轉的像素地球" width={30} height={30} isInteractive />
+        <Svg source={EARTH_FAST} alt={S.altEarth} width={30} height={30} isInteractive />
       ) : (
-        <Svg source={done ? WINK : IDLE} alt={done ? '像素罐罐眨眼' : '像素罐罐'} width={30} height={33} isInteractive />
+        <Svg source={done ? WINK : IDLE} alt={done ? S.altWink : S.altIdle} width={30} height={33} isInteractive />
       )
     const text =
       now === 'tcan'
-        ? 'TCAN 台灣氣候行動網絡'
+        ? S.tcan
         : now === 'earth'
-          ? '跑好久了，地球轉一下～'
+          ? S.earth
           : done
-            ? '搞定！✨'
-            : '罐罐說你好！一起為氣候採取行動 🌍'
+            ? S.done
+            : S.hello
 
     return (
       <Box flexDirection="row" alignItems="center" justifyContent="center" gap={1} width="100%">

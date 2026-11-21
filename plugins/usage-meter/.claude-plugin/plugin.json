@@ -1,6 +1,22 @@
 {
   "name": "usage-meter",
   "version": "1.0.0",
-  "description": "在輸入框右上方放一顆按鈕，打開後顯示 Claude 方案的 5 小時、7 天額度還剩多少、何時重置，以及每天用掉多少 7 天額度的月曆（TCAN 配色）。可以搭配 usage-time 一起用。",
-  "types": "./types/index.d.ts"
+  "description": "輸入框右上方的按鈕：5 小時／7 天額度還剩多少、何時重置、每天用量月曆（TCAN 配色）。A button above the prompt box: how much of your 5-hour / 7-day limits is left, when they reset, and a daily-usage calendar.",
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "language": {
+      "type": "string",
+      "title": "介面語言 / UI language",
+      "description": "auto：跟著系統語言 / follow the system language；zh-Hant：繁體中文；en：English",
+      "default": "auto",
+      "options": [
+        "auto",
+        "zh-Hant",
+        "en"
+      ]
+    }
+  },
+  "author": {
+    "name": "AcaciaCCC"
+  }
 }

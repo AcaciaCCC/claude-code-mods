@@ -1,11 +1,34 @@
 {
   "name": "tcan-claude-mods",
-  "owner": { "name": "AcaciaCCC" },
-  "description": "Claude Code 小工具合集：TCAN 主題、罐罐像素動畫、用量額度、使用時間",
+  "owner": {
+    "name": "AcaciaCCC"
+  },
+  "description": "Claude Code 小工具合輯：TCAN 主題、罐罐像素動畫、額度、使用時間、資料夾標籤。Claude Code mods: TCAN theme, CAN pixel animations, usage limits, time spent, folder label.",
   "plugins": [
-    { "name": "tcan-theme", "source": "./plugins/tcan-theme", "description": "TCAN 配色主題（Claude 桌面版與手機版）" },
-    { "name": "guanguan-pixel", "source": "./plugins/guanguan-pixel", "description": "罐罐像素動畫（Claude 桌面版）" },
-    { "name": "usage-meter", "source": "./plugins/usage-meter", "description": "5 小時／7 天額度、重置時間、每天用量月曆" },
-    { "name": "usage-time", "source": "./plugins/usage-time", "description": "今天、本週每天、本週各資料夾的使用時間" }
+    {
+      "name": "tcan-theme",
+      "source": "./plugins/tcan-theme",
+      "description": "TCAN 台灣氣候行動網絡配色主題：TCAN 藍、深藍與暖化紅，固定淺色。A Taiwan Climate Action Network (TCAN) color theme: TCAN blue, navy and warming red, light mode."
+    },
+    {
+      "name": "guanguan-pixel",
+      "source": "./plugins/guanguan-pixel",
+      "description": "TCAN 吉祥物「罐罐」像素動畫：工作中踏步、每日招呼、做完事眨眼、提到 TCAN 跳出圖示、跑太久地球轉一下。Pixel animations of CAN, the TCAN mascot: marches while Claude works, says hi once a day, winks when done."
+    },
+    {
+      "name": "usage-meter",
+      "source": "./plugins/usage-meter",
+      "description": "輸入框右上方的按鈕：5 小時／7 天額度還剩多少、何時重置、每天用量月曆（TCAN 配色）。A button above the prompt box: how much of your 5-hour / 7-day limits is left, when they reset, and a daily-usage calendar."
+    },
+    {
+      "name": "usage-time",
+      "source": "./plugins/usage-time",
+      "description": "記錄你使用 Claude Code 的時間：今天、本週每天、本週各資料夾。Tracks time spent in Claude Code: today, each day this week, and this week by folder."
+    },
+    {
+      "name": "folder-label",
+      "source": "./plugins/folder-label",
+      "description": "在輸入框上方左邊顯示「❐ 資料夾名稱」。Shows ❐ and the current folder's name above the prompt box, on the left."
+    }
   ]
 }

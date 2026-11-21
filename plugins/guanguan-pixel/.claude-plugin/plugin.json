@@ -1,7 +1,22 @@
 {
   "name": "guanguan-pixel",
   "version": "1.0.0",
-  "description": "TCAN 吉祥物「罐罐」像素動畫：工作中踏步、每日招呼、做完事眨眼、提到 TCAN 跳出圖示、跑太久地球轉一下",
-  "author": { "name": "TCAN" },
-  "types": "./types/index.d.ts"
+  "description": "TCAN 吉祥物「罐罐」像素動畫：工作中踏步、每日招呼、做完事眨眼、提到 TCAN 跳出圖示、跑太久地球轉一下。Pixel animations of CAN, the TCAN mascot: marches while Claude works, says hi once a day, winks when done.",
+  "author": {
+    "name": "TCAN"
+  },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "language": {
+      "type": "string",
+      "title": "介面語言 / UI language",
+      "description": "auto：跟著系統語言 / follow the system language；zh-Hant：繁體中文；en：English",
+      "default": "auto",
+      "options": [
+        "auto",
+        "zh-Hant",
+        "en"
+      ]
+    }
+  }
 }

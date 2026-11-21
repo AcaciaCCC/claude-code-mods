@@ -2,6 +2,11 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
 import type { Day } from '../types'
+import { pickLang, STRINGS } from './strings'
+import type { Strings } from './strings'
+
+// 介面文字：register 依設定的 language 換成對應語言。
+let S: Strings = STRINGS['zh-Hant']
 
 // ─── TCAN 配色：要調整顏色只改這裡 ─────────────────────────────────────
 const PALETTE = {
@@ -17,8 +22,7 @@ const PALETTE = {
 const SVG_GREY = 'rgba(138,143,152,0.28)'
 
 const PANE = 'usage-time'
-const TITLE = '使用時間'
-const WIDGET = { id: PANE, title: TITLE, placement: 'widget' } as const
+const widget = () => ({ id: PANE, title: S.title, placement: 'widget' }) as const
 // 兩個 mod 都裝時，由 usage-meter 把兩顆按鈕畫在同一行。
 const LEADER_COMMAND = 'usage-meter'
 // 兩則訊息之間隔超過這麼久，就當作你離開了，那段不算。
@@ -38,8 +42,6 @@ const isOpen = atom({ plugin: 'usage-time', key: 'isOpen' } as const, false)
 const sessionMs = atom({ plugin: 'usage-time', key: 'sessionMs' } as const, 0)
 // 上一則訊息送出的時間（0 = 還沒送過）。
 const lastSubmitAt = atom({ plugin: 'usage-time', key: 'lastSubmitAt' } as const, 0)
-
-const WEEK = ['日', '一', '二', '三', '四', '五', '六']
 
 function dayKey(ms: number): string {
   const d = new Date(ms)
@@ -134,7 +136,7 @@ function toDays(stay: Record<string, Stay>): Record<string, Day> {
   return out
 }
 
-/** 資料夾路徑的最後一層：「/Users/me/Desktop/claude閒聊」→「claude閒聊」。 */
+/** 資料夾路徑的最後一層：「/Users/me/Projects/my-project」→「my-project」。 */
 function folderName(cwd: string): string {
   const parts = cwd.split(/[\\/]/).filter(Boolean)
   return parts[parts.length - 1] ?? cwd
@@ -159,12 +161,12 @@ function folderShares(
   const top = sorted.slice(0, colors.length)
   const others = sorted.slice(colors.length).reduce((a, [, ms]) => a + ms, 0)
   const rows = top.map(([f, ms], i) => ({
-    name: f || '未分類（記資料夾之前）',
+    name: f || S.unsorted,
     ms,
     pct: Math.round((ms / total) * 100),
     color: colors[i] ?? rest,
   }))
-  if (others > 0) rows.push({ name: '其他', ms: others, pct: Math.round((others / total) * 100), color: rest })
+  if (others > 0) rows.push({ name: S.other, ms: others, pct: Math.round((others / total) * 100), color: rest })
   return rows
 }
 
@@ -210,17 +212,19 @@ async function toggle($: EngineInterface): Promise<string> {
   if (up) {
     await $.ui.close({ id: PANE })
     await update($, isOpen, () => false)
-    return '已收起使用時間。'
+    return S.closedMsg
   }
-  const r = await $.ui.open(WIDGET)
+  const r = await $.ui.open(widget())
   await update($, isOpen, () => r.isPlaced)
-  return r.isPlaced ? '已打開使用時間。' : '使用時間小工具沒有打開。'
+  return r.isPlaced ? S.openedMsg : S.notOpened
 }
 
-export const register: Register = on => {
+export const register: Register = (on, options) => {
+  S = STRINGS[pickLang(options?.language)]
+
   on('session.start', async ($, e, next) => {
     const result = await next(e)
-    await $.command.register({ name: 'usage-time', description: '打開或收起使用時間小工具' })
+    await $.command.register({ name: 'usage-time', description: S.commandDescription })
     try {
       const u = await $.session.usage()
       await update($, startedAt, () => u.startedAt)
@@ -260,7 +264,7 @@ export const register: Register = on => {
     // （它直接讀這裡的 workMs 和 days；指令裡不能再呼叫別的指令）。
     if ((await $.command.list()).some(c => c.name === LEADER_COMMAND)) {
       if ((await $.ui.panes()).some(p => p.id === PANE)) await $.ui.close({ id: PANE })
-      return { text: '使用時間和額度在同一個小工具裡：請按輸入框右上方的「◷」按鈕。' }
+      return { text: S.inMeter }
     }
     return { text: await toggle($) }
   })
@@ -305,7 +309,7 @@ export const register: Register = on => {
       <Box justifyContent="flex-end" width="100%">
         <Button
           key="toggle"
-          label={open ? '◷ 收起' : `◷ ${short(spent)}`}
+          label={open ? `◷ ${S.close}` : `◷ ${short(spent)}`}
           variant="secondary"
           onPress={() => void toggle($)}
         />
@@ -331,7 +335,7 @@ export const register: Register = on => {
         {/* 今天在所有對話花的時間（最大字）。 */}
         <Box flexDirection="column">
           <Box justifyContent="space-between" alignItems="flex-end">
-            <Text color={PALETTE.muted}>今天（所有對話）</Text>
+            <Text color={PALETTE.muted}>{S.todayAll}</Text>
             <Text bold>{short(today)}</Text>
           </Box>
         </Box>
@@ -343,7 +347,7 @@ export const register: Register = on => {
             const isToday = k === todayKey
             const isFuture = k > todayKey
             const [y, mo, d] = k.split('-').map(Number)
-            const weekday = WEEK[new Date(y ?? 0, (mo ?? 1) - 1, d ?? 1).getDay()]
+            const weekday = S.weekdays[new Date(y ?? 0, (mo ?? 1) - 1, d ?? 1).getDay()]
             return (
               <Box key={k} flexDirection="column" flexGrow={1} alignItems="center">
                 <Text bold={isToday} color={isToday ? undefined : PALETTE.muted}>
@@ -364,7 +368,7 @@ export const register: Register = on => {
 
         <Box key="folders" flexDirection="column" gap="xs">
           <Box justifyContent="space-between">
-            <Text color={PALETTE.muted}>本週各資料夾</Text>
+            <Text color={PALETTE.muted}>{S.weekFolders}</Text>
             <Text>{short(weekTotal)}</Text>
           </Box>
           {shares.length > 0 && (
@@ -387,7 +391,7 @@ export const register: Register = on => {
           ))}
         </Box>
 
-        <Text color={PALETTE.muted}>從第一則到最後一則訊息；隔超過 30 分鐘不算</Text>
+        <Text color={PALETTE.muted}>{S.note}</Text>
       </Box>
     )
   })

@@ -1,5 +1,8 @@
 {
   "name": "tcan-theme",
   "version": "0.3.1",
-  "description": "TCAN 台灣氣候行動網絡配色主題：TCAN 藍、深藍與暖化紅，固定淺色，程式碼與 Git 顏色同步 TCAN 色"
+  "description": "TCAN 台灣氣候行動網絡配色主題：TCAN 藍、深藍與暖化紅，固定淺色。A Taiwan Climate Action Network (TCAN) color theme: TCAN blue, navy and warming red, light mode.",
+  "author": {
+    "name": "AcaciaCCC"
+  }
 }

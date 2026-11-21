@@ -1,5 +1,9 @@
 import { expect, test } from 'claude-code/testing'
 
+// 既有的測試都用繁中介面；英文另外測。
+const ZH = { options: { language: 'zh-Hant' } } as const
+const EN = { options: { language: 'en' } } as const
+
 const BAND = {
   plugin: 'usage-time',
   component: 'AbovePrompt',
@@ -22,7 +26,7 @@ const command = (name: string, plugin: string) => ({
   plugin,
 })
 
-test('alone, it draws its own time button', async ($, on) => {
+test('alone, it draws its own time button', ZH, async ($, on) => {
   on('command.list', () => ({ value: [command('usage-time', 'usage-time')] }))
   on('state.get', (_, e, next) =>
     e.key === 'sessionMs' ? { value: { value: 10 * 60_000, version: 1 } } : next(e),
@@ -34,7 +38,7 @@ test('alone, it draws its own time button', async ($, on) => {
   await ui.unmount()
 })
 
-test('with usage-meter installed, it leaves the row to usage-meter', async ($, on) => {
+test('with usage-meter installed, it leaves the row to usage-meter', ZH, async ($, on) => {
   on('command.list', () => ({
     value: [command('usage-time', 'usage-time'), command('usage-meter', 'usage-meter')],
   }))
@@ -44,7 +48,7 @@ test('with usage-meter installed, it leaves the row to usage-meter', async ($, o
   await ui.unmount()
 })
 
-test('with usage-meter installed, `/usage-time` points to the shared widget', async ($, on) => {
+test('with usage-meter installed, `/usage-time` points to the shared widget', ZH, async ($, on) => {
   on('command.list', () => ({
     value: [command('usage-time', 'usage-time'), command('usage-meter', 'usage-meter')],
   }))
@@ -54,7 +58,7 @@ test('with usage-meter installed, `/usage-time` points to the shared widget', as
   expect(r.text).toContain('◷')
 })
 
-test('time runs from the first message to the last; a gap over 30 minutes is left out; overlaps count once', async ($, on) => {
+test('time runs from the first message to the last; a gap over 30 minutes is left out; overlaps count once', ZH, async ($, on) => {
   const t = (h: number, m: number) => new Date(2026, 10, 17, h, m).getTime()
   // 另一個對話已經記了 09:10–09:30，跟這個對話重疊。
   let stored: unknown = { '2026-11-17': { spans: [[t(9, 10), t(9, 30)]], work: 0 } }
@@ -67,7 +71,7 @@ test('time runs from the first message to the last; a gap over 30 minutes is lef
     return { value: undefined }
   })
   on('prompt.submit', (_, e) => ({ text: e.text }))
-  on('session.cwd', () => ({ value: '/Users/me/Desktop/claude閒聊' }))
+  on('session.cwd', () => ({ value: '/Users/me/Desktop/my-project' }))
 
   const send = () =>
     $.prompt.submit({ text: 'hi', wait: false, origin: { kind: 'composer' } } as never)
@@ -86,16 +90,16 @@ test('time runs from the first message to the last; a gap over 30 minutes is lef
   expect(stored).toEqual({
     '2026-11-17': {
       spans: [
-        [t(9, 0), t(9, 40), 'claude閒聊'],
+        [t(9, 0), t(9, 40), 'my-project'],
         [t(9, 10), t(9, 30)],
-        [t(13, 0), t(13, 10), 'claude閒聊'],
+        [t(13, 0), t(13, 10), 'my-project'],
       ],
       work: 0,
     },
   })
 })
 
-test('a span across midnight is split between the two days', async ($, on) => {
+test('a span across midnight is split between the two days', ZH, async ($, on) => {
   let stored: unknown = undefined
   let now = new Date(2026, 10, 17, 23, 50).getTime()
   on('clock.now', () => ({ value: now }))
@@ -105,7 +109,7 @@ test('a span across midnight is split between the two days', async ($, on) => {
     return { value: undefined }
   })
   on('prompt.submit', (_, e) => ({ text: e.text }))
-  on('session.cwd', () => ({ value: '/Users/me/Desktop/claude閒聊' }))
+  on('session.cwd', () => ({ value: '/Users/me/Desktop/my-project' }))
   const send = () =>
     $.prompt.submit({ text: 'hi', wait: false, origin: { kind: 'composer' } } as never)
 
@@ -115,12 +119,12 @@ test('a span across midnight is split between the two days', async ($, on) => {
 
   const midnight = new Date(2026, 10, 18).getTime()
   expect(stored).toEqual({
-    '2026-11-17': { spans: [[midnight - 10 * 60_000, midnight, 'claude閒聊']], work: 0 },
-    '2026-11-18': { spans: [[midnight, midnight + 10 * 60_000, 'claude閒聊']], work: 0 },
+    '2026-11-17': { spans: [[midnight - 10 * 60_000, midnight, 'my-project']], work: 0 },
+    '2026-11-18': { spans: [[midnight, midnight + 10 * 60_000, 'my-project']], work: 0 },
   })
 })
 
-test('a finished main turn counts toward Claude work only; a subagent turn does not', async ($, on) => {
+test('a finished main turn counts toward Claude work only; a subagent turn does not', ZH, async ($, on) => {
   let stored: unknown = undefined
   on('clock.now', () => ({ value: new Date(2026, 10, 17, 15, 0).getTime() }))
   on('store.get', () => ({ value: stored }))
@@ -137,7 +141,7 @@ test('a finished main turn counts toward Claude work only; a subagent turn does 
   expect(stored).toEqual({ '2026-11-17': { spans: [], work: 120_000 } })
 })
 
-test('the widget shows this week split by folder, with totals that count overlaps once', async ($, on) => {
+test('the widget shows this week split by folder, with totals that count overlaps once', ZH, async ($, on) => {
   const t = (d: number, h: number, m: number) => new Date(2026, 10, d, h, m).getTime()
   on('command.list', () => ({ value: [command('usage-time', 'usage-time')] }))
   on('clock.now', () => ({ value: t(17, 15, 0) }))
@@ -146,8 +150,8 @@ test('the widget shows this week split by folder, with totals that count overlap
       ? {
           value: {
             value: {
-              '2026-11-16': { active: 90 * 60_000, work: 0, folders: { 'claude閒聊': 60 * 60_000, TCAN: 30 * 60_000 } },
-              '2026-11-17': { active: 30 * 60_000, work: 0, folders: { 'claude閒聊': 30 * 60_000 } },
+              '2026-11-16': { active: 90 * 60_000, work: 0, folders: { 'my-project': 60 * 60_000, notes: 30 * 60_000 } },
+              '2026-11-17': { active: 30 * 60_000, work: 0, folders: { 'my-project': 30 * 60_000 } },
             },
             version: 1,
           },
@@ -166,9 +170,34 @@ test('the widget shows this week split by folder, with totals that count overlap
   expect(texts).toContain('本週各資料夾')
   expect(texts[texts.indexOf('本週各資料夾') + 1]).toBe('120m') // 本週總計放在標題後面
   expect(texts).not.toContain('本週') // 原本那一行拿掉了
-  expect(texts).toContain('claude閒聊')
+  expect(texts).toContain('my-project')
   expect(texts).toContain('75% · 90m')
-  expect(texts).toContain('TCAN')
+  expect(texts).toContain('notes')
   expect(texts).toContain('25% · 30m')
+  await ui.unmount()
+})
+
+test('in English, the widget reads in English', EN, async ($, on) => {
+  const t = (d: number, h: number, m: number) => new Date(2026, 10, d, h, m).getTime()
+  on('command.list', () => ({ value: [command('usage-time', 'usage-time')] }))
+  on('clock.now', () => ({ value: t(17, 15, 0) }))
+  on('state.get', (_, e, next) =>
+    e.key === 'days'
+      ? { value: { value: { '2026-11-17': { active: 30 * 60_000, work: 0, folders: { 'my-project': 30 * 60_000 } } }, version: 1 } }
+      : next(e),
+  )
+
+  const ui = await $.ui.mount({
+    plugin: 'usage-time',
+    component: 'Pane',
+    requestId: 'usage-time',
+    surface: 'desktop',
+    props: { title: 'Time spent', isFocused: false, bodyColumns: 36, placement: 'widget', scroll: { offset: 0, bodyRows: 40 }, view: {} },
+  } as const)
+  const texts = (await ui.findAll({ type: 'Text' })).map(x => x.text)
+  expect(texts).toContain('Today (all conversations)')
+  expect(texts).toContain('This week by folder')
+  expect(texts).toContain('Tu')
+  expect(texts.some(x => /[一-鿿]/.test(x))).toBe(false)
   await ui.unmount()
 })

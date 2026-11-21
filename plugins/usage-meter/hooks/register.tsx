@@ -2,6 +2,11 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, SessionRateLimit } from 'claude-code'
 
 import type { Day, Limit } from '../types'
+import { pickLang, STRINGS } from './strings'
+import type { Strings } from './strings'
+
+// 介面文字：register 依設定的 language 換成對應語言。
+let S: Strings = STRINGS['zh-Hant']
 
 // ─── TCAN 配色：要調整顏色只改這裡 ─────────────────────────────────────
 // TCAN logo 三色：青藍 #0DCAFE、藍 #1A67F8、紅 #FF5561
@@ -29,7 +34,6 @@ function stripeAt(i: number): string {
 }
 
 const PANE = 'usage-meter'
-const TITLE = '用量'
 const limits = atom({ plugin: 'usage-meter', key: 'limits' } as const, [] as Limit[])
 // 兩顆按鈕各自的開關：用量那一段、使用時間那一段。
 const showUsage = atom({ plugin: 'usage-meter', key: 'showUsage' } as const, false)
@@ -61,12 +65,13 @@ function dayColor(ms: number, track: string = PALETTE.track): string {
   return PALETTE.danger
 }
 
-const NAMES: Record<string, string> = { five_hour: '5 小時', seven_day: '7 天' }
+const nameOf = (kind: string): string | undefined =>
+  kind === 'five_hour' ? S.fiveHour : kind === 'seven_day' ? S.sevenDay : undefined
 const ORDER = ['five_hour', 'seven_day']
 
 function pick(rs: SessionRateLimit[]): Limit[] {
   return rs
-    .filter(r => r.kind in NAMES)
+    .filter(r => nameOf(r.kind) !== undefined)
     .sort((a, b) => ORDER.indexOf(a.kind) - ORDER.indexOf(b.kind))
     .map(r => ({ kind: r.kind, percentUsed: r.percentUsed, resetsAt: r.resetsAt }))
 }
@@ -92,10 +97,8 @@ function battery(ls: Limit[]): string {
 /** 收起時按鈕上的字：5 小時已用 %（還沒有資料就寫「用量」）。 */
 function usedLabel(ls: Limit[]): string {
   const five = ls.find(l => l.kind === 'five_hour')
-  return five ? `${Math.round(five.percentUsed)}%` : '用量'
+  return five ? `${Math.round(five.percentUsed)}%` : S.usageButton
 }
-
-const WEEK = ['日', '一', '二', '三', '四', '五', '六']
 
 function when(iso: string | undefined, now: number): string {
   if (!iso) return ''
@@ -105,7 +108,7 @@ function when(iso: string | undefined, now: number): string {
   const time = `${pad(d.getHours())}:${pad(d.getMinutes())}`
   const isToday = d.toDateString() === new Date(now).toDateString()
   const isTomorrow = d.toDateString() === new Date(now + 86_400_000).toDateString()
-  const day = isToday ? '今天' : isTomorrow ? '明天' : `${d.getMonth() + 1}/${d.getDate()} 週${WEEK[d.getDay()]}`
+  const day = isToday ? S.today : isTomorrow ? S.tomorrow : S.dateLabel(d)
   return `↻ ${day} ${time}`
 }
 
@@ -148,12 +151,12 @@ function folderShares(
   const top = sorted.slice(0, colors.length)
   const others = sorted.slice(colors.length).reduce((a, [, ms]) => a + ms, 0)
   const rows = top.map(([f, ms], i) => ({
-    name: f || '未分類（記資料夾之前）',
+    name: f || S.unsorted,
     ms,
     pct: Math.round((ms / total) * 100),
     color: colors[i] ?? rest,
   }))
-  if (others > 0) rows.push({ name: '其他', ms: others, pct: Math.round((others / total) * 100), color: rest })
+  if (others > 0) rows.push({ name: S.other, ms: others, pct: Math.round((others / total) * 100), color: rest })
   return rows
 }
 
@@ -169,7 +172,7 @@ async function syncPane($: EngineInterface): Promise<void> {
     await $.ui.close({ id: PANE })
     return
   }
-  const title = u && t ? '用量與時間' : u ? TITLE : '使用時間'
+  const title = u && t ? S.titleBoth : u ? S.title : S.titleTime
   await $.ui.open({ ...WIDGET, title })
 }
 
@@ -251,7 +254,7 @@ function calendarSvg(
     const prev = col > 0 ? dateAt(col - 1, 0) : null
     if (col === 0 || (prev && prev.getMonth() !== monday.getMonth())) {
       out.push(
-        `<text x="${col * step}" y="13" font-size="12" font-family="system-ui, sans-serif" fill="${SVG_LABEL}">${monday.getMonth() + 1}月</text>`,
+        `<text x="${col * step}" y="13" font-size="12" font-family="system-ui, sans-serif" fill="${SVG_LABEL}">${S.month(monday.getMonth() + 1)}</text>`,
       )
     }
     for (let row = 0; row < 7; row++) {
@@ -260,7 +263,7 @@ function calendarSvg(
       if (k > todayKey) continue
       const pct = use[k] ?? 0
       const fill = pct > 0 ? useColor(pct) : SVG_EMPTY
-      const label = `${d.getMonth() + 1}/${d.getDate()}：${pct > 0 ? `用掉 ${pct}%` : '沒有用量'}`
+      const label = S.calendarTip(d.getMonth() + 1, d.getDate(), pct)
       out.push(
         `<rect x="${col * step}" y="${LABEL_H + row * step}" width="${CELL}" height="${CELL}" rx="${RADIUS}" fill="${fill}"><title>${label}</title></rect>`,
       )
@@ -269,10 +272,12 @@ function calendarSvg(
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${out.join('')}</svg>`
 }
 
-export const register: Register = on => {
+export const register: Register = (on, options) => {
+  S = STRINGS[pickLang(options?.language)]
+
   on('session.start', async ($, e, next) => {
     const result = await next(e)
-    await $.command.register({ name: 'usage-meter', description: '打開或收起 5 小時／7 天額度' })
+    await $.command.register({ name: 'usage-meter', description: S.commandDescription })
     try {
       const u = await $.session.usage()
       await update($, limits, () => pick(u.rateLimits))
@@ -310,7 +315,7 @@ export const register: Register = on => {
 
   on('command.run', { command: 'usage-meter' }, async $ => {
     await toggleUsage($)
-    return { text: (await read($, showUsage)) ? '已打開額度。' : '已收起額度。' }
+    return { text: (await read($, showUsage)) ? S.opened : S.closed }
   })
 
   on('session.measure', async ($, e, next) => {
@@ -334,30 +339,41 @@ export const register: Register = on => {
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     if (e.props.hasSurvey) return next(e)
 
-    const { Box, Button } = $.ui.resolve(e)
+    const { Box, Button, Text } = $.ui.resolve(e)
     await read($, tick)
     const u = await read($, showUsage)
     const t = await read($, showTime)
     const ls = await read($, limits)
     const hasTime = await hasTimeMod($)
     const spent = await read($, timeSession)
+    // 左邊：這個對話所在的資料夾（只寫最後一層的名稱）；讀不到就不顯示。
+    let folder = ''
+    try {
+      const cwd = await $.session.cwd()
+      folder = cwd.split(/[\\/]/).filter(Boolean).pop() ?? cwd
+    } catch {
+      folder = ''
+    }
 
     return (
-      <Box justifyContent="flex-end" width="100%" gap={1}>
+      <Box justifyContent="space-between" alignItems="center" width="100%" gap={1}>
+        <Text color={PALETTE.muted}>{folder ? `❐ ${folder}` : ''}</Text>
+        <Box gap={1}>
         {hasTime && (
           <Button
             key="time"
-            label={t ? '◷ 收起' : `◷ ${shortTime(spent)}`}
+            label={t ? `◷ ${S.close}` : `◷ ${shortTime(spent)}`}
             variant="secondary"
             onPress={() => void toggleTime($)}
           />
         )}
         <Button
           key="toggle"
-          label={`${battery(ls)} ${u ? '收起' : usedLabel(ls)}`}
+          label={`${battery(ls)} ${u ? S.close : usedLabel(ls)}`}
           variant="secondary"
           onPress={() => void toggleUsage($)}
         />
+        </Box>
       </Box>
     )
   })
@@ -388,11 +404,11 @@ export const register: Register = on => {
 
     if (u || !t) {
       const ls = await read($, limits)
-      if (both) parts.push(<Box key="h-usage">{heading('額度')}</Box>)
+      if (both) parts.push(<Box key="h-usage">{heading(S.headingUsage)}</Box>)
       if (ls.length === 0) {
         parts.push(
           <Text key="no-limits" color={PALETTE.muted}>
-            下一次回覆後顯示額度
+            {S.noLimits}
           </Text>,
         )
       }
@@ -402,10 +418,10 @@ export const register: Register = on => {
         parts.push(
           <Box key={l.kind} flexDirection="column">
             <Box justifyContent="space-between" alignItems="flex-end">
-              {label(NAMES[l.kind] ?? l.kind)}
+              {label(nameOf(l.kind) ?? l.kind)}
               <Text>
                 <Text bold color={color}>{left}</Text>
-                <Text color={PALETTE.muted}>% 剩餘</Text>
+                <Text color={PALETTE.muted}>{S.left}</Text>
               </Text>
             </Box>
             <Box height={1} marginTop={1}>
@@ -421,7 +437,7 @@ export const register: Register = on => {
                 )
               })}
             </Box>
-            <Text color={PALETTE.muted}>已用 {100 - left}%</Text>
+            <Text color={PALETTE.muted}>{S.used(100 - left)}</Text>
             <Text color={PALETTE.teal}>{when(l.resetsAt, now)}</Text>
           </Box>,
         )
@@ -443,12 +459,12 @@ export const register: Register = on => {
       if (Svg) {
         parts.push(
           <Box key="calendar" flexDirection="column" alignItems="flex-start" marginTop={1} gap="xs">
-            {label('每天用掉的 7 天額度')}
+            {label(S.calendar)}
             {/* 靠左：外面包一層靠左的列，並給 SVG 固定的寬高，不讓它撐滿置中。 */}
             <Box justifyContent="flex-start" width="100%">
               <Svg
                 source={calendarSvg(weeks, dateAt, todayKey, use)}
-                alt={`最近 ${weeks} 週每天用掉的 7 天額度`}
+                alt={S.calendarAlt(weeks)}
                 width={weeks * (CELL + GAP) - GAP}
                 height={LABEL_H + 7 * (CELL + GAP) - GAP}
                 isInteractive
@@ -458,7 +474,7 @@ export const register: Register = on => {
         )
       } else parts.push(
         <Box key="calendar" flexDirection="column" marginTop={1}>
-          {label('每天用掉的 7 天額度')}
+          {label(S.calendar)}
           {/* 格子之間留小空白（xs：桌面版是細縫，終端機是一格）。 */}
           <Box gap="xs">
             {Array.from({ length: weeks }, (_, col) => {
@@ -468,7 +484,7 @@ export const register: Register = on => {
               return (
                 <Box key={`m${col}`} width={2}>
                   <Text color={PALETTE.muted} wrap="truncate-end">
-                    {isNewMonth ? String(monday.getMonth() + 1) : ''}
+                    {isNewMonth ? S.monthShort(monday.getMonth() + 1) : ''}
                   </Text>
                 </Box>
               )
@@ -505,13 +521,13 @@ export const register: Register = on => {
       const shares = folderShares(days, week, [PALETTE.primary, PALETTE.teal, PALETTE.danger], SVG_EMPTY)
 
       // 額度和使用時間中間多空一行。
-      if (both) parts.push(<Box key="h-time" marginTop={2}>{heading('使用時間')}</Box>)
+      if (both) parts.push(<Box key="h-time" marginTop={2}>{heading(S.headingTime)}</Box>)
 
       // 1. 今天在所有對話花的時間（最大字）。
       parts.push(
         <Box key="today" flexDirection="column">
           <Box justifyContent="space-between" alignItems="flex-end">
-            <Text color={PALETTE.muted}>今天（所有對話）</Text>
+            <Text color={PALETTE.muted}>{S.todayAll}</Text>
             <Text bold>{shortTime(today)}</Text>
           </Box>
         </Box>,
@@ -525,7 +541,7 @@ export const register: Register = on => {
             const isToday = k === todayKey
             const isFuture = k > todayKey
             const [y, mo, d] = k.split('-').map(Number)
-            const weekday = WEEK[new Date(y ?? 0, (mo ?? 1) - 1, d ?? 1).getDay()]
+            const weekday = S.weekdays[new Date(y ?? 0, (mo ?? 1) - 1, d ?? 1).getDay()]
             return (
               <Box key={k} flexDirection="column" flexGrow={1} alignItems="center">
                 <Text bold={isToday} color={isToday ? undefined : PALETTE.muted}>
@@ -548,7 +564,7 @@ export const register: Register = on => {
         parts.push(
         <Box key="folders" flexDirection="column" gap="xs">
           <Box justifyContent="space-between">
-            <Text color={PALETTE.muted}>本週各資料夾</Text>
+            <Text color={PALETTE.muted}>{S.weekFolders}</Text>
             <Text>{shortTime(weekTotal)}</Text>
           </Box>
           {shares.length > 0 && (
@@ -574,7 +590,7 @@ export const register: Register = on => {
       }
       parts.push(
         <Text key="note" color={PALETTE.muted}>
-          從第一則到最後一則訊息；隔超過 30 分鐘不算
+          {S.note}
         </Text>,
       )
     }

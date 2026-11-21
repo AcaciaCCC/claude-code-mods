@@ -1,5 +1,9 @@
 import { expect, test } from 'claude-code/testing'
 
+// 既有的測試都用繁中介面；英文另外測。
+const ZH = { options: { language: 'zh-Hant' } } as const
+const EN = { options: { language: 'en' } } as const
+
 const BAND = {
   plugin: 'usage-meter',
   component: 'AbovePrompt',
@@ -43,7 +47,7 @@ function seed(values: Record<string, unknown>): any {
   }
 }
 
-test('alone, it draws only the usage button', async ($, on) => {
+test('alone, it draws only the usage button', ZH, async ($, on) => {
   on('command.list', () => ({ value: [command('usage-meter')] }))
   on('clock.now', () => ({ value: 0 }))
 
@@ -54,7 +58,7 @@ test('alone, it draws only the usage button', async ($, on) => {
   await ui.unmount()
 })
 
-test('closed, the usage button shows how much of the 5-hour window is used', async ($, on) => {
+test('closed, the usage button shows how much of the 5-hour window is used', ZH, async ($, on) => {
   on('command.list', () => ({ value: [command('usage-meter')] }))
   on('clock.now', () => ({ value: 0 }))
   on(
@@ -72,7 +76,7 @@ test('closed, the usage button shows how much of the 5-hour window is used', asy
   await ui.unmount()
 })
 
-test('both installed: each button opens its own part and then reads 收起', async ($, on) => {
+test('both installed: each button opens its own part and then reads 收起', ZH, async ($, on) => {
   const titles: string[] = []
   on('command.list', () => ({ value: BOTH }))
   on('clock.now', () => ({ value: 0 }))
@@ -102,7 +106,7 @@ test('both installed: each button opens its own part and then reads 收起', asy
   await ui.unmount()
 })
 
-test('both open: quotas on top, time below, read from usage-time', async ($, on) => {
+test('both open: quotas on top, time below, read from usage-time', ZH, async ($, on) => {
   on('command.list', () => ({ value: BOTH }))
   on('clock.now', () => ({ value: NOW }))
   on(
@@ -130,7 +134,7 @@ test('both open: quotas on top, time below, read from usage-time', async ($, on)
   await ui.unmount()
 })
 
-test('this week runs Monday to Sunday, left to right, coloured by hours', async ($, on) => {
+test('this week runs Monday to Sunday, left to right, coloured by hours', ZH, async ($, on) => {
   const h = 3_600_000
   on('command.list', () => ({ value: BOTH }))
   on('clock.now', () => ({ value: NOW })) // 2026-11-17 週二；週一是 11-16
@@ -159,7 +163,7 @@ test('this week runs Monday to Sunday, left to right, coloured by hours', async 
   await ui.unmount()
 })
 
-test('only time open: no quotas in the widget', async ($, on) => {
+test('only time open: no quotas in the widget', ZH, async ($, on) => {
   on('command.list', () => ({ value: BOTH }))
   on('clock.now', () => ({ value: NOW }))
   on(
@@ -177,7 +181,7 @@ test('only time open: no quotas in the widget', async ($, on) => {
   await ui.unmount()
 })
 
-test('alone, the widget shows only the quotas', async ($, on) => {
+test('alone, the widget shows only the quotas', ZH, async ($, on) => {
   on('command.list', () => ({ value: [command('usage-meter')] }))
   on('clock.now', () => ({ value: NOW }))
   on(
@@ -196,7 +200,7 @@ test('alone, the widget shows only the quotas', async ($, on) => {
   await ui.unmount()
 })
 
-test('each day records how much of the 7-day quota went up; drops are not counted', async ($, on) => {
+test('each day records how much of the 7-day quota went up; drops are not counted', ZH, async ($, on) => {
   let stored: unknown = undefined
   let now = new Date(2026, 10, 17, 9, 0).getTime()
   on('clock.now', () => ({ value: now }))
@@ -234,7 +238,7 @@ const CAL_STATE = {
   },
 }
 
-test('on desktop the calendar is one SVG of rounded squares, Monday to Sunday top to bottom', async ($, on) => {
+test('on desktop the calendar is one SVG of rounded squares, Monday to Sunday top to bottom', ZH, async ($, on) => {
   on('command.list', () => ({ value: [command('usage-meter')] }))
   on('clock.now', () => ({ value: NOW })) // 2026-11-17 週二
   on('state.get', seed(CAL_STATE))
@@ -259,7 +263,7 @@ test('on desktop the calendar is one SVG of rounded squares, Monday to Sunday to
   await ui.unmount()
 })
 
-test('in the terminal the calendar falls back to coloured boxes', async ($, on) => {
+test('in the terminal the calendar falls back to coloured boxes', ZH, async ($, on) => {
   on('command.list', () => ({ value: [command('usage-meter')] }))
   on('clock.now', () => ({ value: NOW }))
   on('state.get', seed(CAL_STATE))
@@ -283,7 +287,7 @@ test('in the terminal the calendar falls back to coloured boxes', async ($, on) 
   await ui.unmount()
 })
 
-test('on desktop the quota bars use the same grey as the calendar squares', async ($, on) => {
+test('on desktop the quota bars use the same grey as the calendar squares', ZH, async ($, on) => {
   on('command.list', () => ({ value: [command('usage-meter')] }))
   on('clock.now', () => ({ value: NOW }))
   on('state.get', seed(CAL_STATE))
@@ -304,7 +308,7 @@ test('on desktop the quota bars use the same grey as the calendar squares', asyn
   await ui.unmount()
 })
 
-test('the time part shows this week split by folder, in TCAN colours', async ($, on) => {
+test('the time part shows this week split by folder, in TCAN colours', ZH, async ($, on) => {
   on('command.list', () => ({ value: BOTH }))
   on('clock.now', () => ({ value: NOW }))
   on(
@@ -312,8 +316,8 @@ test('the time part shows this week split by folder, in TCAN colours', async ($,
     seed({
       'usage-meter.showTime': true,
       'usage-time.days': {
-        '2026-11-16': { active: 90 * 60_000, work: 0, folders: { 'claude閒聊': 60 * 60_000, TCAN: 30 * 60_000 } },
-        '2026-11-17': { active: 30 * 60_000, work: 0, folders: { 'claude閒聊': 30 * 60_000 } },
+        '2026-11-16': { active: 90 * 60_000, work: 0, folders: { 'my-project': 60 * 60_000, notes: 30 * 60_000 } },
+        '2026-11-17': { active: 30 * 60_000, work: 0, folders: { 'my-project': 30 * 60_000 } },
       },
     }),
   )
@@ -328,5 +332,34 @@ test('the time part shows this week split by folder, in TCAN colours', async ($,
   expect(words).toContain('25% · 30m')
   const dots = texts.filter(x => x.text === '■ ').map(x => x.props.color)
   expect(dots).toEqual(['#1A67F8', '#0DCAFE']) // 第一名藍、第二名青藍
+  await ui.unmount()
+})
+
+test('in English, the button reads in English', EN, async ($, on) => {
+  on('command.list', () => ({ value: [command('usage-meter')] }))
+  on('clock.now', () => ({ value: NOW }))
+
+  const band = await $.ui.mount(BAND)
+  expect((await band.find({ type: 'Button', key: 'toggle' }))?.props.label).toBe('▯▯▯ Usage')
+  await band.unmount()
+})
+
+test('in English, the widget reads in English', EN, async ($, on) => {
+  on('command.list', () => ({ value: [command('usage-meter')] }))
+  on('clock.now', () => ({ value: NOW }))
+  on(
+    'state.get',
+    seed({
+      'usage-meter.showUsage': true,
+      'usage-meter.limits': [{ kind: 'five_hour', percentUsed: 28 }],
+    }),
+  )
+  const ui = await $.ui.mount({ ...PANE, props: { ...PANE.props, title: 'Usage' } })
+  const texts = (await ui.findAll({ type: 'Text' })).map(t => t.text)
+  expect(texts).toContain('5-hour')
+  expect(texts).toContain('% left')
+  expect(texts).toContain('28% used')
+  expect(texts).toContain('7-day limit used per day')
+  expect(texts.some(t => /[\u4e00-\u9fff]/.test(t))).toBe(false)
   await ui.unmount()
 })

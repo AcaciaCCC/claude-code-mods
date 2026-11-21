@@ -1,0 +1,8 @@
+{
+  "name": "folder-label",
+  "version": "1.0.0",
+  "description": "在輸入框上方左邊顯示「❐ 資料夾名稱」。Shows ❐ and the current folder's name above the prompt box, on the left.",
+  "author": {
+    "name": "AcaciaCCC"
+  }
+}
